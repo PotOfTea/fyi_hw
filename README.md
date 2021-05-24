@@ -10,9 +10,23 @@ This doc will approach architecture iteratively, will start with basic setup and
   <br/>
 </p>
 
+## Requirments
+
+1. _The full URL provided by the customer (e.g. https://www.google.com) will always be shortened to an encoded value with our domain (e.g. https://lin.ks/xCd5a)_ 
+2. _Shortened URLs must be unique for each customer. If two different customers create a short URL to the same destination (customer A and customer B both create short URLs to https://www.google.com), each customer is given a unique shortened URL._
+3. _Duplicate shortened links for each customer are not allowed. If a customer attempts to create a new shortened link for a URL that already exists, the existing shortened link will be provided (e.g. a link for https://www.google.com already exists. Customer tries to create a new link to the same place, we return the existing short URL)._
+
+
+To ensure that generated url always in same for user/url combination we can use hash function that would take as input userId, and url. To prevent creating duplicates we check if the generated url hash is already in DB.
+```typescript
+async hashUrl(userId: int, url: string, seed: string): string {
+
+}
+```
+
 ## Base components
 
-| *Component*         | *Usage*                                       | *Description*                                                                                                         |
+| **Component**       | **Usage**                                     | **Description**                                                                                                       |
 |---------------------|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | _API_               | Provides all the endpoints                    | For basis setup we using any modern framework/language, I would personally write with either nestjs/flask.            |
 | _SQL Database_      | Stores primary copy of urls; User information | Any common rational SQL engine would work here. I would favor Postgres via cloud provider.                            |
@@ -21,31 +35,35 @@ This doc will approach architecture iteratively, will start with basic setup and
 | _Cache_             | Caches generated urls                         | As traffic will mostly will contain READ requests we should cache to avoid hitting DB layer.                          |
 
 ## Endpoints
-Endpoints will versioned using _URI-based_ schema for exampl `/api/v1/foo` where v1 respesents resources version.
+Endpoints will be versioned using _URI-based_ schema for example `/api/v1/foo` where v1 represents resources version `1`.
 
-### auth
+### Create
 
-### create
+Generates shortned url 
+
+`POST /v1/url`
 ```
-POST /v1/url
+curl https://api.lin.ks/v1/url \
+  -u API_TOKEN \
+  -d url="https://google.com"
 ```
 
-### retrieve
+### Retrieve
 ```
 GET /v1/url/
 ```
 
-### update
+### Update
 ```
 PATCH /v1/url
 ```
-### delete
+### Delete
 ```
 DELETE /v1/url
 ```
-### info 
+### Info 
 ```
-GET /v1/url/?/statistic
+GET /v1/url/:id/info
 ```
 
 ### Infra
