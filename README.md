@@ -19,8 +19,9 @@ This doc will approach architecture iteratively, will start with basic setup and
 
 To ensure that generated url always in same for user/url combination we can use hash function that would take as input userId, and url. To prevent creating duplicates we check if the generated url hash is already in DB.
 ```typescript
-async hashUrl(userId: int, url: string, seed: string): string {
-
+async hashUrl(userId: int, url: string): string {
+  const hash = new Hash({seed=userId.toString()}) // userId would be used as seed to ensure that same url would be used
+  return hash.encode(url).substring(0,4)   //
 }
 ```
 
