@@ -10,7 +10,7 @@ This doc will approach architecture iteratively, will start with basic setup and
   <br/>
 </p>
 
-### Base components
+## Base components
 
 | *Component*         | *Usage*                                       | *Description*                                                                                                         |
 |---------------------|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
@@ -20,21 +20,33 @@ This doc will approach architecture iteratively, will start with basic setup and
 | _Reverse Proxy_     | Exposes api to public internet                | As we have single instance of backend server, only things that is needed ir reverse proxy.                            |
 | _Cache_             | Caches generated urls                         | As traffic will mostly will contain READ requests we should cache to avoid hitting DB layer.                          |
 
-### Endpoints
+## Endpoints
 Endpoints will versioned using _URI-based_ schema for exampl `/api/v1/foo` where v1 respesents resources version.
 
-#### auth
+### auth
 
-#### create
+### create
 ```
-POST /v1/create
+POST /v1/url
 ```
 
-#### retrieve
-#### update
-#### delete
-#### info 
+### retrieve
+```
+GET /v1/url/
+```
 
+### update
+```
+PATCH /v1/url
+```
+### delete
+```
+DELETE /v1/url
+```
+### info 
+```
+GET /v1/url/?/statistic
+```
 
 ### Infra
 
