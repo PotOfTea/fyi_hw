@@ -3,76 +3,166 @@
 Design url shortener based on requirements [here](https://gist.github.com/stevecox/9e92eaa14f745e456bcf78b50835f7c5#project-2-backend-link-shortener).
 This doc will approach architecture iteratively, will start with basic setup and after that's completed will explore more complex/scalable solutions.
 
-## Intial Design
+# Intial Design
 
 <p align="center">
   <img src="images/basic_design.png">
   <br/>
 </p>
 
-## Requirments
+# Requirments
 
 1. _The full URL provided by the customer (e.g. https://www.google.com) will always be shortened to an encoded value with our domain (e.g. https://lin.ks/xCd5a)_ 
 2. _Shortened URLs must be unique for each customer. If two different customers create a short URL to the same destination (customer A and customer B both create short URLs to https://www.google.com), each customer is given a unique shortened URL._
 3. _Duplicate shortened links for each customer are not allowed. If a customer attempts to create a new shortened link for a URL that already exists, the existing shortened link will be provided (e.g. a link for https://www.google.com already exists. Customer tries to create a new link to the same place, we return the existing short URL)._
 
+While requirements specify CRUD based operation supports, I would suggest in this context  _UPDATE_ doesn't provide any useful to end-users, main reasons:
+* link that is generated depends on input URL, any changes to it that would mean that we would have the different short URL link
+* there no other input data in the context of the task, which means _UPDATE_ operation most likely is not needed, could be _CREATE/RETRIEVE/DELETE_
 
-To ensure that generated url always in same for user/url combination we can use hash function that would take as input userId, and url. To prevent creating duplicates we check if the generated url hash is already in DB.
+Requirements didn't specify error handling is task scope, so this skipped to save time.
+
+To ensure that generated URL always the same for the user/URL combination - we can use a hash function that would take as input userId, and URL. To prevent creating duplicates we check if the generated URL hash is already in DB.
 ```typescript
 async hashUrl(userId: int, url: string): string {
   const hash = new Hash({seed=userId.toString()}) // userId would be used as seed to ensure that same url would be used
-  return hash.encode(url).substring(0,4)   //
+  return hash.encode(url).substring(0,4)
 }
 ```
 
-## Base components
+# Workflow
 
-| **Component**       | **Usage**                                     | **Description**                                                                                                       |
-|---------------------|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| _API_               | Provides all the endpoints                    | For basis setup we using any modern framework/language, I would personally write with either nestjs/flask.            |
-| _SQL Database_      | Stores primary copy of urls; User information | Any common rational SQL engine would work here. I would favor Postgres via cloud provider.                            |
-| _Analytic Database_ | Stores statistics for visited urls            | For this we really need fast analytics database, for example AWS Redshift or if need self-hosted clickhouse; questdb. |
-| _Reverse Proxy_     | Exposes api to public internet                | As we have single instance of backend server, only things that is needed ir reverse proxy.                            |
-| _Cache_             | Caches generated urls                         | As traffic will mostly will contain READ requests we should cache to avoid hitting DB layer.                          |
+### Creating shortened link
 
-## Endpoints
+1. User sends data to _API_ endpoint
+2. _Reverse Proxy_ forwards the request to _API_
+3. _API_ parse request
+   1. check if the URL is in _SQL Database_
+      * if URL exist return existing _SQL Database_ record
+   2. if URL doesn't exist create a new record in _SQL Database_
+   3. _API_ return request with the response to  _Reverse Proxy_
+4. _Reverse Proxy_ returns request to User
+
+### Accessing shortened link
+
+1. User open link in a browser
+2. _API_ get request on the endpoint that contains id of shortened URL
+3. _API_ queries _Cache_ if it contains the record of URL
+   * if it's cache miss, _API_ queries _SQL Database_ and pushes record to _Cache_
+4. If _Cache_ contains a record it's returned to the user
+5. _API_ send access statistics to _Analytic Database_
+6. _API_ forwards redirect the request to specified URL
+
+# Base components
+
+| **Component**       | **Usage**                                     | **Description**                                                                                                |
+|---------------------|-----------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| _API_               | Provides all the endpoints                    | For basis setup, we using any modern framework/language, I would personally write with either nestjs/flask.    |
+| _SQL Database_      | Stores primary copy of URLs; User information | Any common rational SQL engine would work here. I would favor Postgres via cloud provider.                     |
+| _Analytic Database_ | Stores statistics for visited URLs            | For this we need fast analytics database, for example, AWS Redshift or if need self-hosted Clickhouse; Questdb |
+| _Reverse Proxy_     | Exposes API to public internet                | As we have a single instance of a backend server, only things that are needed in reverse proxy.                |
+| _Cache_             | Caches generated URLs                         | As traffic will mostly contain READ requests we should cache to avoid hitting the DB layer.                    |
+
+# Endpoints
 Endpoints will be versioned using _URI-based_ schema for example `/api/v1/foo` where v1 represents resources version `1`.
 
-### Create
-
-Generates shortned url 
+## Create
 
 `POST /v1/url`
-```
-curl https://api.lin.ks/v1/url \
-  -u API_TOKEN \
+```sh
+curl https://api.lin.ks/v1/link \
+  -X POST \
+  -u $API_TOKEN \
   -d url="https://google.com"
 ```
-
-### Retrieve
-```
-GET /v1/url/
-```
-
-### Update
-```
-PATCH /v1/url
-```
-### Delete
-```
-DELETE /v1/url
-```
-### Info 
-```
-GET /v1/url/:id/info
+Response:
+```json
+{
+  "id": "ID",
+  "link": "https://lin.ks/xCd5a",
+  "url": "https://google.com"
+}
 ```
 
-### Infra
+## Retrieve
+`GET /v1/link/`
+```sh
+curl https://api.lin.ks/v1/link/:id \
+  -u $API_TOKEN
+```
+Response:
+```json
+{
+  "id": "ID",
+  "link": "https://lin.ks/xCd5a",
+  "url": "https://google.com"
+}
+```
 
-If we are cloud providers, we could cloud managed solution for most of the services expect the backend api. This would allows bootstarp quickly serivces and focues on actual backend developement.
+## Update
+`PATCH /v1/url`
+```sh
+curl -X PATCH https://api.lin.ks/v1/link/:id \
+  -u $API_TOKEN \
+  -d '{"url": "https://duckduckgo.com"}'
+```
+Response:
+```json
+{
+  "id": "ID",
+  "link": "https://lin.ks/xCd5a",
+  "url": "https://google.com"
+}
+```
 
 
+## Delete
+`DELETE /v1/url`
+```sh
+curl -X DELETE https://api.lin.ks/v1/link/:id \
+  -u $API_TOKEN \
+```
+Response:
+```json
+{
+  "id": "ID",
+  "status": "DELETED"
+}
+```
 
+## Info 
+`GET /v1/url/:id/info`
+```sh
+curl https://api.lin.ks/v1/link/:id \
+  -u $API_TOKEN \
+```
+Response:
+```json
+{
+  "id": "ID",
+  "total_clicks": 30,
+  "people_clicks": 4,
+  "clicks_by_days": [
+    {"date":1},
+    {"date2":3},
+    {"date3":1}
+  ],
+  "people_clicks_by_days": [
+    {"date":1},
+    {"date2":3},
+    {"date3":1}
+  ]
+}
+```
 
+# Scaling design
 
-## Scaling design
+To scale this system we could break out components by functionality. And which parts of the system they access.
+Main changes:
+* _API_ broken into read/write that can scale independently and has reduced access surface to other components
+* _SQL Database_, _Cache_, _Analytics  Database_ run in cluster mode 
+
+<p align="center">
+  <img src="images/scaled_design.png">
+  <br/>
+</p>
