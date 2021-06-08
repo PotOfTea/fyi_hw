@@ -37,10 +37,10 @@ As this one-man project, most of the work will be focused on providing business 
 
 # Techonology
 
-For a simple deployment/infra setup, we will AWS ECS, ECR, RDS, and Elastic Cache.
-For ingress, we will Nginx + let's encrypt container with public IP
-For services discovery, we will ECS service discovery
-For deployment infra provisioning we will Terraform
+For a simple deployment/infra setup - AWS ECS, ECR, RDS, and Elastic Cache.
+For ingress - Nginx + let's encrypt container with public IP
+For services discovery - ECS service discovery
+For deployment infra provisioning - Terraform
 
 <p align="center">
   <img src="images/infra_design.png">
