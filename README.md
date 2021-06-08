@@ -12,6 +12,7 @@ This doc will approach architecture iteratively, will start with basic setup and
 
 # Estimates
 As this one-man project, most of the work will be focused on providing business value, code quality(design, tests). Infrastructure/deployment would be done on a basic level.
+
 **To complete this task I'll need around 25 working days.**
 
 | **Task**                    | **Date**                   |
