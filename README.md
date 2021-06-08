@@ -10,6 +10,43 @@ This doc will approach architecture iteratively, will start with basic setup and
   <br/>
 </p>
 
+# Estimates
+As this one-man project, most of the work will be focused on providing business value, code quality(design, tests). Infrastructure/deployment would be done on a basic level.
+**To complete this task I'll need around 25 working days.**
+
+| **Task**                    | **Date**                   |
+|-----------------------------|----------------------------|
+| App scaffold                | Jun 9,2021 - June 11,2021  |
+| Endpoint POST "link"        | Jun 14,2021 - June 15,2021 |
+| Endpoint GET "link"         | Jun 16,2021 - June 17,2021 |
+| Endpoint UPDATE "link"      | Jun 18,2021 - June 21,2021 |
+| Endpoint PATCH "link"       | Jun 22,2021 - June 23,2021 |
+| Endpoint DELETE "link"      | Jun 24,2021 - June 25,2021 |
+| Integrate with SQL Database | Jun 28,2021 - June 30,2021 |
+| Integrate with Cache        | Jul 1,2021 - Jul 2,2021    |
+| Public Holidays             | Jul 5,2021 - Jul 6,2021    |
+| Integrate with Analytics DB | Jul 7,2021 - Jul 13,2021   |
+| Deployment/Infra            | Jul 14,2021 - Jul 16,2021  |
+
+<p align="center">
+  <img src="images/time_line.png">
+  <br/>
+</p>
+
+
+# Techonology
+
+For a simple deployment/infra setup, we will AWS ECS, ECR, RDS, and Elastic Cache.
+For ingress, we will Nginx + let's encrypt container with public IP
+For services discovery, we will ECS service discovery
+For deployment infra provisioning we will Terraform
+
+<p align="center">
+  <img src="images/infra_design.png">
+  <br/>
+</p>
+
+
 # Requirments
 
 1. _The full URL provided by the customer (e.g. https://www.google.com) will always be shortened to an encoded value with our domain (e.g. https://lin.ks/xCd5a)_ 
@@ -68,7 +105,7 @@ Endpoints will be versioned using _URI-based_ schema for example `/api/v1/foo` w
 
 ## Create
 
-`POST /v1/url`
+`POST /v1/link`
 ```sh
 curl https://api.lin.ks/v1/link \
   -X POST \
@@ -85,7 +122,7 @@ Response:
 ```
 
 ## Retrieve
-`GET /v1/link/`
+`GET /v1/link`
 ```sh
 curl https://api.lin.ks/v1/link/:id \
   -u $API_TOKEN
@@ -100,7 +137,7 @@ Response:
 ```
 
 ## Update
-`PATCH /v1/url`
+`PATCH /v1/link`
 ```sh
 curl -X PATCH https://api.lin.ks/v1/link/:id \
   -u $API_TOKEN \
@@ -117,7 +154,7 @@ Response:
 
 
 ## Delete
-`DELETE /v1/url`
+`DELETE /v1/link`
 ```sh
 curl -X DELETE https://api.lin.ks/v1/link/:id \
   -u $API_TOKEN \
@@ -131,7 +168,7 @@ Response:
 ```
 
 ## Info 
-`GET /v1/url/:id/info`
+`GET /v1/link/:id/info`
 ```sh
 curl https://api.lin.ks/v1/link/:id \
   -u $API_TOKEN \
